@@ -67,6 +67,12 @@ def view_status():
     conn.close()
     return render_template('view_status.html', status_data=status_data)
 import json
+import math
+
+def clean_value(val):
+    if isinstance(val, float) and math.isnan(val):
+        return None
+    return val
 
 @app.route('/insert-sample')
 def insert_sample_data():
@@ -78,6 +84,7 @@ def insert_sample_data():
         cursor = conn.cursor()
 
         for row in data['po_details']:
+            cleaned = {k: clean_value(v) for k, v in row.items()}
             cursor.execute("""
                 INSERT INTO po_details (
                     po_number, revised_po, location, pin_code,
@@ -85,20 +92,21 @@ def insert_sample_data():
                     po_date, asn, grn, payment_status
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                row['po_number'], row['revised_po'], row['location'], row['pin_code'],
-                row['product_1l'], row['product_900ml'], row['product_500ml'], row['product_450ml'],
-                row['po_date'], row['asn'], row['grn'], row['payment_status']
+                cleaned['po_number'], cleaned['revised_po'], cleaned['location'], cleaned['pin_code'],
+                cleaned['product_1l'], cleaned['product_900ml'], cleaned['product_500ml'], cleaned['product_450ml'],
+                cleaned['po_date'], cleaned['asn'], cleaned['grn'], cleaned['payment_status']
             ))
 
         for row in data['appointment_status']:
+            cleaned = {k: clean_value(v) for k, v in row.items()}
             cursor.execute("""
                 INSERT INTO appointment_status (
                     confirm_date, delivery_location, vendor_name,
                     brand, category, sku_count, total_po_qty, po_number
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                row['confirm_date'], row['delivery_location'], row['vendor_name'],
-                row['brand'], row['category'], row['sku_count'], row['total_po_qty'], row['po_number']
+                cleaned['confirm_date'], cleaned['delivery_location'], cleaned['vendor_name'],
+                cleaned['brand'], cleaned['category'], cleaned['sku_count'], cleaned['total_po_qty'], cleaned['po_number']
             ))
 
         conn.commit()
@@ -106,6 +114,7 @@ def insert_sample_data():
         return "✅ Sample data inserted successfully"
     except Exception as e:
         return f"❌ Error: {e}"
+
 
 @app.route('/debug-status')
 def debug_status():
