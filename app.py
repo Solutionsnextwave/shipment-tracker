@@ -84,5 +84,23 @@ def create_admin():
         conn.commit()
         return "✅ Admin user created successfully"
     except pymysql.err.IntegrityError:
-        return "⚠️ Admin already exists"
+        return "⚠️ Admin already exists"@app.route('/force-create-admin')
+def force_create_admin():
+    from werkzeug.security import generate_password_hash
+    password_hash = generate_password_hash("admin123")
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE users
+        SET password_hash = %s, can_view = TRUE, can_edit = TRUE, can_delete = TRUE, is_admin = TRUE
+        WHERE email = %s
+    """, (password_hash, 'kumaran@moojic.com'))
+
+    conn.commit()
+    conn.close()
+    return "✅ Password for kumaran@moojic.com reset to admin123 using Flask’s own environment"
+
+    
 
