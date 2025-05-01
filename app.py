@@ -91,11 +91,18 @@ def force_create_admin():
     from werkzeug.security import generate_password_hash
     conn = get_db()
     cursor = conn.cursor()
+
     new_hash = generate_password_hash("admin123")
-    print("REHASHED:", new_hash)  # Optional for logs
+    print("REHASHED:", new_hash)  # Check in logs
+
     cursor.execute("UPDATE users SET password_hash = %s WHERE email = %s", (new_hash, 'kumaran@moojic.com'))
     conn.commit()
-    return "✅ Rehashed admin password with correct method"
+    cursor.execute("SELECT password_hash FROM users WHERE email = %s", ('kumaran@moojic.com',))
+    updated = cursor.fetchone()
+    print("UPDATED HASH:", updated['password_hash'])
+    conn.close()
+    return "✅ Admin password updated."
+
 
 
     
