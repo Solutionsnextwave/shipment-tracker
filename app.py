@@ -1,27 +1,25 @@
+
 from flask import Flask, render_template, request, redirect, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 import pymysql
 import os
 
 app = Flask(__name__)
-app.secret_key = 'secret123'  # Replace with a secure value in production
+app.secret_key = 'secret123'
 
 def get_db():
     return pymysql.connect(
-        host=os.getenv('DB_HOST'),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        db=os.getenv('DB_NAME'),
+        host=os.getenv("DB_HOST"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        db=os.getenv("DB_NAME"),
         cursorclass=pymysql.cursors.DictCursor
     )
 
 @app.before_request
 def require_login():
-    allowed_routes = ('login', 'static', 'create_admin')
-    if request.endpoint not in allowed_routes and 'user' not in session:
+    if request.endpoint not in ('login', 'static', 'create_admin') and 'user' not in session:
         return redirect('/login')
-
-from werkzeug.security import generate_password_hash, check_password_hash
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -29,13 +27,11 @@ def login():
     if request.method == 'POST':
         email = request.form['email'].strip()
         password = request.form['password'].strip()
-        
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
         conn.close()
-
         if user:
             if check_password_hash(user['password_hash'], password):
                 session['user'] = {
@@ -52,9 +48,7 @@ def login():
                 error = "❌ Password does not match"
         else:
             error = "❌ Email not found"
-
     return render_template('login.html', error=error)
-
 
 @app.route('/logout')
 def logout():
@@ -71,53 +65,17 @@ def status():
         return "Access denied"
     return render_template('status.html')
 
-@app.route('/users', methods=['GET', 'POST'])
-def manage_users():
-    if not session['user'].get('is_admin'):
-        return "Access denied"
-    conn = get_db()
-    cursor = conn.cursor()
-    if request.method == 'POST':
-        email = request.form['email']
-        name = request.form['name']
-        password = generate_password_hash(request.form['password'])
-        view = 'can_view' in request.form
-        edit = 'can_edit' in request.form
-        delete = 'can_delete' in request.form
-        cursor.execute("""
-            INSERT INTO users (email, name, password_hash, can_view, can_edit, can_delete)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (email, name, password, view, edit, delete))
-        conn.commit()
-    cursor.execute("SELECT * FROM users")
-    users = cursor.fetchall()
-    conn.close()
-    return render_template('users.html', users=users)
-
-@app.route('/delete-user/<int:id>')
-def delete_user(id):
-    if not session['user'].get('is_admin'):
-        return "Access denied"
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM users WHERE id = %s", (id,))
-    conn.commit()
-    conn.close()
-    return redirect('/users')
-
 @app.route('/create-admin')
 def create_admin():
     conn = get_db()
     cursor = conn.cursor()
-    hashed = generate_password_hash("admin123")
+    password_hash = generate_password_hash("admin123")
     try:
         cursor.execute("""
             INSERT INTO users (email, name, password_hash, can_view, can_edit, can_delete, is_admin)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, ('kumaran@moojic.com', 'Admin', hashed, True, True, True, True))
+            VALUES (%s, %s, %s, TRUE, TRUE, TRUE, TRUE)
+        """, ('kumaran@moojic.com', 'Admin', password_hash))
         conn.commit()
-        msg = "✅ Admin user created successfully!"
+        return "✅ Admin created successfully"
     except pymysql.err.IntegrityError:
-        msg = "⚠️ Admin already exists."
-    conn.close()
-    return msg
+        return "⚠️ Admin already exists"
