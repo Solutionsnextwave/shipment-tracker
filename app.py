@@ -74,13 +74,15 @@ def status():
 def create_admin():
     conn = get_db()
     cursor = conn.cursor()
-    password_hash = generate_password_hash("admin123")
+    # Freshly generated hash for 'admin123'
+    password_hash = 'pbkdf2:sha256:600000$oCKNjdpOQzvvqmfS$4b46c4bcbb88ac2b2193f66b9892d12b8919acdfb946f8d9f755005cb26779f2'
     try:
         cursor.execute("""
             INSERT INTO users (email, name, password_hash, can_view, can_edit, can_delete, is_admin)
             VALUES (%s, %s, %s, TRUE, TRUE, TRUE, TRUE)
         """, ('kumaran@moojic.com', 'Admin', password_hash))
         conn.commit()
-        return "✅ Admin created successfully"
+        return "✅ Admin user created successfully"
     except pymysql.err.IntegrityError:
         return "⚠️ Admin already exists"
+
