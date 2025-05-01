@@ -33,6 +33,10 @@ def login():
         user = cursor.fetchone()
         conn.close()
         if user:
+            print("HASH FROM DB:", user['password_hash'])
+            print("PASSWORD TYPED:", password)
+            print("MATCHES:", check_password_hash(user['password_hash'], password))
+            
             if check_password_hash(user['password_hash'], password):
                 session['user'] = {
                     'id': user['id'],
@@ -49,9 +53,6 @@ def login():
         else:
             error = "❌ Email not found"
     return render_template('login.html', error=error)
-print("HASH FROM DB:", user['password_hash'])
-print("PASSWORD TYPED:", password)
-print("MATCHES:", check_password_hash(user['password_hash'], password))
 
 
 @app.route('/logout')
