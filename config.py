@@ -1,5 +1,5 @@
-
-DB_HOST = 'sql12.freesqldatabase.com'
-DB_USER = 'sql12776388'
-DB_PASSWORD = 'H99c2NaZyK'
-DB_NAME = 'sql12776388'
+import os
+DB_HOST = os.getenv('DB_HOST')
+DB_USER = os.getenv('DB_USER')
+DB_PASSWORD = os.getenv('DB_PASSWORD')
+DB_NAME = os.getenv('DB_NAME')
