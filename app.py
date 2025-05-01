@@ -49,6 +49,10 @@ def login():
         else:
             error = "❌ Email not found"
     return render_template('login.html', error=error)
+print("HASH FROM DB:", user['password_hash'])
+print("PASSWORD TYPED:", password)
+print("MATCHES:", check_password_hash(user['password_hash'], password))
+
 
 @app.route('/logout')
 def logout():
