@@ -66,6 +66,23 @@ def view_status():
         status_data = cursor.fetchall()
     conn.close()
     return render_template('view_status.html', status_data=status_data)
+@app.route('/debug-status')
+def debug_status():
+    conn = get_db()
+    with conn.cursor() as cursor:
+        cursor.execute("SHOW TABLES;")
+        tables = cursor.fetchall()
+        cursor.execute("SELECT * FROM po_details LIMIT 1;")
+        po_sample = cursor.fetchall()
+        cursor.execute("SELECT * FROM appointment_status LIMIT 1;")
+        ap_sample = cursor.fetchall()
+    conn.close()
+    return {
+        "tables": tables,
+        "sample_po_details": po_sample,
+        "sample_appointment_status": ap_sample
+    }
+
 
 if __name__ == '__main__':
     app.run(debug=True)
