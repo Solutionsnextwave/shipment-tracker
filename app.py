@@ -43,6 +43,31 @@ def add_po():
     companies = cursor.fetchall()
     conn.close()
     return render_template('add_po.html', companies=companies)
+@app.route('/add-status', methods=['GET', 'POST'])
+def add_status():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    if request.method == 'POST':
+        cursor.execute("""
+            INSERT INTO appointment_status (
+                confirm_date, delivery_location, vendor_name,
+                brand, category, sku_count, total_po_qty, po_number
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            request.form['confirm_date'], request.form['delivery_location'],
+            request.form['vendor_name'], request.form['brand'],
+            request.form['category'], request.form['sku_count'],
+            request.form['total_po_qty'], request.form['po_number']
+        ))
+        conn.commit()
+        return redirect('/status')
+
+    cursor.execute("SELECT po_number FROM po_details")
+    pos = cursor.fetchall()
+    conn.close()
+    return render_template('add_status.html', po_list=pos)
+
 
 @app.route('/companies', methods=['GET', 'POST'])
 def companies():
