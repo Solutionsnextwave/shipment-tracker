@@ -70,41 +70,6 @@ def status():
         return "Access denied"
     return render_template('status.html')
 
-@app.route('/create-admin')
-def create_admin():
-    from werkzeug.security import generate_password_hash
-    conn = get_db()
-    cursor = conn.cursor()
-    password_hash = generate_password_hash("admin123")
-    try:
-        cursor.execute("""
-            INSERT INTO users (email, name, password_hash, can_view, can_edit, can_delete, is_admin)
-            VALUES (%s, %s, %s, TRUE, TRUE, TRUE, TRUE)
-        """, ('kumaran@moojic.com', 'Admin', password_hash))
-        conn.commit()
-        return "✅ Admin created with fresh hash"
-    except pymysql.err.IntegrityError:
-        return "⚠️ Admin already exists"
-
-        
-@app.route('/force-create-admin')
-def force_create_admin():
-    from werkzeug.security import generate_password_hash
-    conn = get_db()
-    cursor = conn.cursor()
-
-    new_hash = generate_password_hash("admin123")
-    print("REHASHED:", new_hash)  # Check in logs
-
-    cursor.execute("UPDATE users SET password_hash = %s WHERE email = %s", (new_hash, 'kumaran@moojic.com'))
-    conn.commit()
-    cursor.execute("SELECT password_hash FROM users WHERE email = %s", ('kumaran@moojic.com',))
-    updated = cursor.fetchone()
-    print("UPDATED HASH:", updated['password_hash'])
-    conn.close()
-    return "✅ Admin password updated."
-
-
 
     
 
