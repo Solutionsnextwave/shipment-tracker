@@ -66,6 +66,47 @@ def view_status():
         status_data = cursor.fetchall()
     conn.close()
     return render_template('view_status.html', status_data=status_data)
+import json
+
+@app.route('/insert-sample')
+def insert_sample_data():
+    try:
+        with open("insert_sample_data.json") as f:
+            data = json.load(f)
+
+        conn = get_db()
+        cursor = conn.cursor()
+
+        for row in data['po_details']:
+            cursor.execute("""
+                INSERT INTO po_details (
+                    po_number, revised_po, location, pin_code,
+                    product_1l, product_900ml, product_500ml, product_450ml,
+                    po_date, asn, grn, payment_status
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                row['po_number'], row['revised_po'], row['location'], row['pin_code'],
+                row['product_1l'], row['product_900ml'], row['product_500ml'], row['product_450ml'],
+                row['po_date'], row['asn'], row['grn'], row['payment_status']
+            ))
+
+        for row in data['appointment_status']:
+            cursor.execute("""
+                INSERT INTO appointment_status (
+                    confirm_date, delivery_location, vendor_name,
+                    brand, category, sku_count, total_po_qty, po_number
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                row['confirm_date'], row['delivery_location'], row['vendor_name'],
+                row['brand'], row['category'], row['sku_count'], row['total_po_qty'], row['po_number']
+            ))
+
+        conn.commit()
+        conn.close()
+        return "✅ Sample data inserted successfully"
+    except Exception as e:
+        return f"❌ Error: {e}"
+
 @app.route('/debug-status')
 def debug_status():
     conn = get_db()
