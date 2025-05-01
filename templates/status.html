@@ -1,1 +1,26 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h4>Shipment Status</h4>
+<a href="/export" class="btn btn-outline-success btn-sm mb-2">Download CSV</a>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>PO Number</th>
+      <th>Date</th>
+      <th>Company</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in shipments %}
+    <tr>
+      <td>{{ s.po_number }}</td>
+      <td>{{ s.date }}</td>
+      <td>{{ s.company }}</td>
+      <td>{{ s.status }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
 <html>{% extends 'layout.html' %}{% block content %}Status{% endblock %}</html>
