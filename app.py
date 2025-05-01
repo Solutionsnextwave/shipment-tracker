@@ -21,29 +21,40 @@ def require_login():
     if request.endpoint not in allowed_routes and 'user' not in session:
         return redirect('/login')
 
+from werkzeug.security import generate_password_hash, check_password_hash
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    error = None
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
+        email = request.form['email'].strip()
+        password = request.form['password'].strip()
+        
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
         conn.close()
-        if user and check_password_hash(user['password_hash'], password):
-            session['user'] = {
-                'id': user['id'],
-                'name': user['name'],
-                'email': user['email'],
-                'is_admin': user['is_admin'],
-                'can_view': user['can_view'],
-                'can_edit': user['can_edit'],
-                'can_delete': user['can_delete']
-            }
-            return redirect('/')
-        return render_template('login.html', error="Invalid credentials")
-    return render_template('login.html')
+
+        if user:
+            if check_password_hash(user['password_hash'], password):
+                session['user'] = {
+                    'id': user['id'],
+                    'name': user['name'],
+                    'email': user['email'],
+                    'is_admin': user['is_admin'],
+                    'can_view': user['can_view'],
+                    'can_edit': user['can_edit'],
+                    'can_delete': user['can_delete']
+                }
+                return redirect('/')
+            else:
+                error = "❌ Password does not match"
+        else:
+            error = "❌ Email not found"
+
+    return render_template('login.html', error=error)
+
 
 @app.route('/logout')
 def logout():
