@@ -1,1 +1,18 @@
-<h1>Shipment Tracker App</h1>
+
+{% extends 'layout.html' %}
+{% block content %}
+<h4>All PO Details</h4>
+<table class="table table-bordered">
+  <thead><tr><th>PO Number</th><th>Location</th><th>PO Date</th><th>Payment Status</th></tr></thead>
+  <tbody>
+    {% for row in po_data %}
+    <tr>
+      <td>{{ row.po_number }}</td>
+      <td>{{ row.location }}</td>
+      <td>{{ row.po_date }}</td>
+      <td>{{ row.payment_status }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
