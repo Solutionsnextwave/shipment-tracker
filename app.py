@@ -1,7 +1,6 @@
 
 from flask import Flask, render_template, request, redirect, session, url_for
 from werkzeug.security import generate_password_hash
-print(generate_password_hash('admin123'))
 import pymysql
 import os
 
