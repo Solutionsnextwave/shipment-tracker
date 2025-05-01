@@ -1,1 +1,23 @@
-{% extends 'layout.html' %}{% block content %}<h3>Add PO Page</h3>{% endblock %}
+
+{% extends 'layout.html' %}
+{% block content %}
+<h3>Add New PO</h3>
+<form method="POST">
+  <div class="mb-3"><label>PO Number</label><input type="text" name="po_number" class="form-control" required></div>
+  <div class="mb-3"><label>Location</label><input type="text" name="location" class="form-control"></div>
+  <div class="mb-3"><label>PO Date</label><input type="date" name="po_date" class="form-control"></div>
+  <div class="mb-3"><label>1L Qty</label><input type="number" name="product_1l" class="form-control"></div>
+  <div class="mb-3"><label>900ml Qty</label><input type="number" name="product_900ml" class="form-control"></div>
+  <div class="mb-3"><label>500ml Qty</label><input type="number" name="product_500ml" class="form-control"></div>
+  <div class="mb-3"><label>450ml Qty</label><input type="number" name="product_450ml" class="form-control"></div>
+  <div class="mb-3">
+    <label>Company</label>
+    <select name="company_id" class="form-control">
+      {% for company in companies %}
+        <option value="{{ company.id }}">{{ company.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button class="btn btn-success">Submit</button>
+</form>
+{% endblock %}

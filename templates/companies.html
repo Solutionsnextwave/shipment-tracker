@@ -1,1 +1,31 @@
-{% extends 'layout.html' %}{% block content %}<h3>Company Master Page</h3>{% endblock %}
+
+{% extends 'layout.html' %}
+{% block content %}
+<h3>Company Master</h3>
+<form method="POST" class="row g-3 mb-4">
+  <div class="col-md-3"><input type="text" name="name" placeholder="Company Name" class="form-control" required></div>
+  <div class="col-md-2"><input type="text" name="code" placeholder="Code" class="form-control"></div>
+  <div class="col-md-3"><input type="text" name="contact_person" placeholder="Contact Person" class="form-control"></div>
+  <div class="col-md-2"><input type="text" name="phone" placeholder="Phone" class="form-control"></div>
+  <div class="col-md-2"><input type="email" name="email" placeholder="Email" class="form-control"></div>
+  <div class="col-md-12"><button class="btn btn-primary">Add Company</button></div>
+</form>
+
+<table class="table table-bordered table-sm">
+  <thead class="table-light">
+    <tr><th>Name</th><th>Code</th><th>Contact</th><th>Phone</th><th>Email</th><th>Action</th></tr>
+  </thead>
+  <tbody>
+    {% for c in companies %}
+    <tr>
+      <td>{{ c.name }}</td>
+      <td>{{ c.code }}</td>
+      <td>{{ c.contact_person }}</td>
+      <td>{{ c.phone }}</td>
+      <td>{{ c.email }}</td>
+      <td><a href="/delete-company/{{ c.id }}" class="btn btn-danger btn-sm">Delete</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
