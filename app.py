@@ -1,106 +1,95 @@
 
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, session, url_for
+from werkzeug.security import generate_password_hash, check_password_hash
 import pymysql
 import os
 
 app = Flask(__name__)
+app.secret_key = 'secret123'
 
 def get_db():
     return pymysql.connect(
-        host=os.getenv("DB_HOST"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        db=os.getenv("DB_NAME"),
+        host=os.getenv('DB_HOST'),
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD'),
+        db=os.getenv('DB_NAME'),
         cursorclass=pymysql.cursors.DictCursor
     )
 
+@app.before_request
+def require_login():
+    if request.endpoint not in ('login', 'static') and 'user' not in session:
+        return redirect('/login')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+        conn.close()
+        if user and check_password_hash(user['password_hash'], password):
+            session['user'] = {
+                'id': user['id'],
+                'name': user['name'],
+                'email': user['email'],
+                'is_admin': user['is_admin'],
+                'can_view': user['can_view'],
+                'can_edit': user['can_edit'],
+                'can_delete': user['can_delete']
+            }
+            return redirect('/')
+        return render_template('login.html', error="Invalid credentials")
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect('/login')
+
 @app.route('/')
 def home():
-    return redirect(url_for('status'))
+    return redirect('/status')
 
 @app.route('/status')
 def status():
+    if not session['user'].get('can_view'):
+        return "Access denied"
     return render_template('status.html')
 
-@app.route('/add-po', methods=['GET', 'POST'])
-def add_po():
+@app.route('/users', methods=['GET', 'POST'])
+def manage_users():
+    if not session['user'].get('is_admin'):
+        return "Access denied"
     conn = get_db()
     cursor = conn.cursor()
     if request.method == 'POST':
-        data = (
-            request.form['po_number'], request.form['location'], request.form['po_date'],
-            request.form['product_1l'], request.form['product_900ml'],
-            request.form['product_500ml'], request.form['product_450ml'],
-            request.form['company_id']
-        )
+        email = request.form['email']
+        name = request.form['name']
+        password = generate_password_hash(request.form['password'])
+        view = 'can_view' in request.form
+        edit = 'can_edit' in request.form
+        delete = 'can_delete' in request.form
         cursor.execute("""
-            INSERT INTO po_details (po_number, location, po_date, product_1l, product_900ml, product_500ml, product_450ml, company_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """, data)
+            INSERT INTO users (email, name, password_hash, can_view, can_edit, can_delete)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (email, name, password, view, edit, delete))
         conn.commit()
-        return redirect('/status')
-    cursor.execute("SELECT id, name FROM companies")
-    companies = cursor.fetchall()
+    cursor.execute("SELECT * FROM users")
+    users = cursor.fetchall()
     conn.close()
-    return render_template('add_po.html', companies=companies)
-@app.route('/add-status', methods=['GET', 'POST'])
-def add_status():
+    return render_template('users.html', users=users)
+
+@app.route('/delete-user/<int:id>')
+def delete_user(id):
+    if not session['user'].get('is_admin'):
+        return "Access denied"
     conn = get_db()
     cursor = conn.cursor()
-
-    if request.method == 'POST':
-        cursor.execute("""
-            INSERT INTO appointment_status (
-                confirm_date, delivery_location, vendor_name,
-                brand, category, sku_count, total_po_qty, po_number
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            request.form['confirm_date'], request.form['delivery_location'],
-            request.form['vendor_name'], request.form['brand'],
-            request.form['category'], request.form['sku_count'],
-            request.form['total_po_qty'], request.form['po_number']
-        ))
-        conn.commit()
-        return redirect('/status')
-
-    cursor.execute("SELECT po_number FROM po_details")
-    pos = cursor.fetchall()
+    cursor.execute("DELETE FROM users WHERE id = %s", (id,))
+    conn.commit()
     conn.close()
-    return render_template('add_status.html', po_list=pos)
-
-
-@app.route('/companies', methods=['GET', 'POST'])
-def companies():
-    conn = get_db()
-    cursor = conn.cursor()
-
-    if request.method == 'POST':
-        cursor.execute("""
-            INSERT INTO companies (name, code, contact_person, phone, email)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (
-            request.form['name'],
-            request.form['code'],
-            request.form['contact_person'],
-            request.form['phone'],
-            request.form['email']
-        ))
-        conn.commit()
-        return redirect('/companies')
-
-    cursor.execute("SELECT * FROM companies")
-    companies = cursor.fetchall()
-    conn.close()
-    return render_template('companies.html', companies=companies)
-
-@app.route('/delete-company/<int:id>')
-def delete_company(id):
-    conn = get_db()
-    with conn.cursor() as cursor:
-        cursor.execute("DELETE FROM companies WHERE id=%s", (id,))
-        conn.commit()
-    conn.close()
-    return redirect('/companies')
-
-if __name__ == "__main__":
-    app.run(debug=True)
+    return redirect('/users')
