@@ -1,1 +1,7 @@
-<html>{% extends 'layout.html' %}{% block content %}Companies{% endblock %}</html>
+
+{% extends 'layout.html' %}
+{% block content %}
+<h4>Companies</h4>
+<form method="POST" class="mb-3 d-flex gap-2"><input name="name" class="form-control" placeholder="New Company" required><button class="btn btn-primary">Add</button></form>
+<ul class="list-group">{% for c in companies %}<li class="list-group-item">{{ c.name }}</li>{% endfor %}</ul>
+{% endblock %}

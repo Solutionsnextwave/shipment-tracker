@@ -1,1 +1,14 @@
-<html>{% extends 'layout.html' %}{% block content %}Add PO{% endblock %}</html>
+
+{% extends 'layout.html' %}
+{% block content %}
+<h4>Add New PO</h4>
+<form method="POST">
+  <input name="po_number" placeholder="PO Number" class="form-control mb-2" required>
+  <input name="date" type="date" class="form-control mb-2" required>
+  <select name="company" class="form-control mb-2" required>
+    {% for c in companies %}<option>{{ c.name }}</option>{% endfor %}
+  </select>
+  <input name="status" placeholder="Status" class="form-control mb-3" required>
+  <button class="btn btn-success">Add</button>
+</form>
+{% endblock %}
