@@ -4,7 +4,7 @@ import pymysql
 import os
 
 app = Flask(__name__)
-app.secret_key = 'secret123'
+app.secret_key = 'secret123'  # Replace with a secure value in production
 
 def get_db():
     return pymysql.connect(
@@ -17,7 +17,8 @@ def get_db():
 
 @app.before_request
 def require_login():
-    if request.endpoint not in ('login', 'static') and 'user' not in session:
+    allowed_routes = ('login', 'static', 'create_admin')
+    if request.endpoint not in allowed_routes and 'user' not in session:
         return redirect('/login')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -43,24 +44,6 @@ def login():
             return redirect('/')
         return render_template('login.html', error="Invalid credentials")
     return render_template('login.html')
-from werkzeug.security import generate_password_hash
-
-@app.route('/create-admin')
-def create_admin():
-    conn = get_db()
-    cursor = conn.cursor()
-    hashed = generate_password_hash("admin123")
-    try:
-        cursor.execute("""
-            INSERT INTO users (email, name, password_hash, can_view, can_edit, can_delete, is_admin)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, ('kumaran@moojic.com', 'Admin', hashed, True, True, True, True))
-        conn.commit()
-        msg = "✅ Admin user created successfully!"
-    except pymysql.err.IntegrityError:
-        msg = "⚠️ Admin already exists."
-    conn.close()
-    return msg
 
 @app.route('/logout')
 def logout():
@@ -110,3 +93,20 @@ def delete_user(id):
     conn.commit()
     conn.close()
     return redirect('/users')
+
+@app.route('/create-admin')
+def create_admin():
+    conn = get_db()
+    cursor = conn.cursor()
+    hashed = generate_password_hash("admin123")
+    try:
+        cursor.execute("""
+            INSERT INTO users (email, name, password_hash, can_view, can_edit, can_delete, is_admin)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, ('kumaran@moojic.com', 'Admin', hashed, True, True, True, True))
+        conn.commit()
+        msg = "✅ Admin user created successfully!"
+    except pymysql.err.IntegrityError:
+        msg = "⚠️ Admin already exists."
+    conn.close()
+    return msg
