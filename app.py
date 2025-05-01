@@ -43,6 +43,24 @@ def login():
             return redirect('/')
         return render_template('login.html', error="Invalid credentials")
     return render_template('login.html')
+from werkzeug.security import generate_password_hash
+
+@app.route('/create-admin')
+def create_admin():
+    conn = get_db()
+    cursor = conn.cursor()
+    hashed = generate_password_hash("admin123")
+    try:
+        cursor.execute("""
+            INSERT INTO users (email, name, password_hash, can_view, can_edit, can_delete, is_admin)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, ('kumaran@moojic.com', 'Admin', hashed, True, True, True, True))
+        conn.commit()
+        msg = "✅ Admin user created successfully!"
+    except pymysql.err.IntegrityError:
+        msg = "⚠️ Admin already exists."
+    conn.close()
+    return msg
 
 @app.route('/logout')
 def logout():
