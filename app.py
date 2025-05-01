@@ -72,19 +72,20 @@ def status():
 
 @app.route('/create-admin')
 def create_admin():
+    from werkzeug.security import generate_password_hash
     conn = get_db()
     cursor = conn.cursor()
-    # Freshly generated hash for 'admin123'
-    password_hash = 'pbkdf2:sha256:600000$oCKNjdpOQzvvqmfS$4b46c4bcbb88ac2b2193f66b9892d12b8919acdfb946f8d9f755005cb26779f2'
+    password_hash = generate_password_hash("admin123")
     try:
         cursor.execute("""
             INSERT INTO users (email, name, password_hash, can_view, can_edit, can_delete, is_admin)
             VALUES (%s, %s, %s, TRUE, TRUE, TRUE, TRUE)
         """, ('kumaran@moojic.com', 'Admin', password_hash))
         conn.commit()
-        return "✅ Admin user created successfully"
+        return "✅ Admin created with fresh hash"
     except pymysql.err.IntegrityError:
         return "⚠️ Admin already exists"
+
         
 @app.route('/force-create-admin')
 def force_create_admin():
