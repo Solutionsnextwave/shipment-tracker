@@ -5,7 +5,7 @@
 <table class="table table-bordered">
   <thead><tr><th>PO Number</th><th>Date</th><th>Company</th><th>Status</th></tr></thead>
   <tbody>{% for s in shipments %}<tr>
-    <td>{{ s.po_number }}</td><td>{{ s.date }}</td><td>{{ s.company }}</td><td>{{ s.status }}</td>
+    <td>{{ s.po_number }}</td><td>{{ s.po_date }}</td><td>{{ s.company }}</td><td>{{ s.status }}</td>
   </tr>{% endfor %}</tbody>
 </table>
 {% endblock %}

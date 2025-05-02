@@ -3,12 +3,51 @@
 {% block content %}
 <h4>Add New PO</h4>
 <form method="POST">
-  <input name="po_number" placeholder="PO Number" class="form-control mb-2" required>
-  <input name="date" type="date" class="form-control mb-2" required>
-  <select name="company" class="form-control mb-2" required>
-    {% for c in companies %}<option>{{ c.name }}</option>{% endfor %}
-  </select>
-  <input name="status" placeholder="Status" class="form-control mb-3" required>
-  <button class="btn btn-success">Add</button>
+  <div class="row">
+    <div class="col-md-4 mb-2">
+      <label>PO Number</label>
+      <input name="po_number" class="form-control" required>
+    </div>
+    <div class="col-md-4 mb-2">
+      <label>PO Date</label>
+      <input type="date" name="po_date" class="form-control" required>
+    </div>
+    <div class="col-md-4 mb-2">
+      <label>Company</label>
+      <select name="company" class="form-control" required>
+        {% for c in companies %}<option>{{ c.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4 mb-2">
+      <label>Location</label>
+      <input name="location" class="form-control" required>
+    </div>
+    <div class="col-md-4 mb-2">
+      <label>PIN Code</label>
+      <input name="pincode" class="form-control" required>
+    </div>
+    <div class="col-md-4 mb-2">
+      <label>ASN Code</label>
+      <input name="asn" class="form-control">
+    </div>
+    <div class="col-md-4 mb-2">
+      <label>GRN Code</label>
+      <input name="grn" class="form-control">
+    </div>
+    <div class="col-md-4 mb-2">
+      <label>Batch Number</label>
+      <input name="batch_number" class="form-control">
+    </div>
+    <div class="col-md-4 mb-2">
+      <label>Status</label>
+      <select name="status" class="form-control">
+        <option>Dispatched</option>
+        <option>In-Transit</option>
+        <option>Delivered</option>
+        <option>Pending</option>
+      </select>
+    </div>
+  </div>
+  <button class="btn btn-success mt-3">Add Shipment</button>
 </form>
 {% endblock %}
