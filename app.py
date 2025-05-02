@@ -17,8 +17,7 @@ def get_db():
 
 @app.before_request
 def require_login():
-    allowed = ('login', 'static')
-    if request.endpoint not in allowed and 'user' not in session:
+    if request.endpoint not in ('login', 'static') and 'user' not in session:
         return redirect('/login')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -66,50 +65,22 @@ def add_po():
     cursor = conn.cursor()
     if request.method == 'POST':
         po_number = request.form['po_number']
-        date = request.form['date']
+        po_date = request.form['po_date']
+        location = request.form['location']
+        pincode = request.form['pincode']
         company = request.form['company']
+        asn = request.form['asn']
+        grn = request.form['grn']
+        batch_number = request.form['batch_number']
         status = request.form['status']
-        cursor.execute("INSERT INTO shipment_status (po_number, date, company, status) VALUES (%s, %s, %s, %s)",
-                       (po_number, date, company, status))
+        cursor.execute("""
+            INSERT INTO shipment_status
+            (po_number, po_date, location, pincode, company, asn, grn, batch_number, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (po_number, po_date, location, pincode, company, asn, grn, batch_number, status))
         conn.commit()
         return redirect('/status')
     cursor.execute("SELECT * FROM companies")
     companies = cursor.fetchall()
     conn.close()
     return render_template('add_po.html', companies=companies)
-
-@app.route('/companies', methods=['GET', 'POST'])
-def companies():
-    if not session['user'].get('is_admin'):
-        return "Access denied"
-    conn = get_db()
-    cursor = conn.cursor()
-    if request.method == 'POST':
-        name = request.form['name']
-        cursor.execute("INSERT INTO companies (name) VALUES (%s)", (name,))
-        conn.commit()
-    cursor.execute("SELECT * FROM companies")
-    companies = cursor.fetchall()
-    conn.close()
-    return render_template('companies.html', companies=companies)
-
-@app.route('/users', methods=['GET', 'POST'])
-def users():
-    if not session['user'].get('is_admin'):
-        return "Access denied"
-    conn = get_db()
-    cursor = conn.cursor()
-    if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        password = generate_password_hash(request.form['password'])
-        can_view = 'can_view' in request.form
-        can_edit = 'can_edit' in request.form
-        can_delete = 'can_delete' in request.form
-        cursor.execute("INSERT INTO users (name, email, password_hash, can_view, can_edit, can_delete, is_admin) VALUES (%s, %s, %s, %s, %s, %s, FALSE)",
-                       (name, email, password, can_view, can_edit, can_delete))
-        conn.commit()
-    cursor.execute("SELECT * FROM users")
-    users = cursor.fetchall()
-    conn.close()
-    return render_template('users.html', users=users)
