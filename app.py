@@ -52,7 +52,13 @@ def status():
         return "Access denied"
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM shipment_status")
+    cursor.execute(
+        "SELECT s.*, pt.name AS product_type, u.name AS uom, w.label AS weight_label "
+        "FROM shipment_status s "
+        "LEFT JOIN product_types pt ON s.product_type_id = pt.id "
+        "LEFT JOIN uom u ON s.uom_id = u.id "
+        "LEFT JOIN weights w ON s.weight_id = w.id"
+    )
     shipments = cursor.fetchall()
     conn.close()
     return render_template('status.html', shipments=shipments)
@@ -64,23 +70,96 @@ def add_po():
     conn = get_db()
     cursor = conn.cursor()
     if request.method == 'POST':
-        po_number = request.form['po_number']
-        po_date = request.form['po_date']
-        location = request.form['location']
-        pincode = request.form['pincode']
-        company = request.form['company']
-        asn = request.form['asn']
-        grn = request.form['grn']
-        batch_number = request.form['batch_number']
-        status = request.form['status']
-        cursor.execute("""
-            INSERT INTO shipment_status
-            (po_number, po_date, location, pincode, company, asn, grn, batch_number, status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (po_number, po_date, location, pincode, company, asn, grn, batch_number, status))
+        fields = [
+            'po_number', 'tracking_number', 'po_date', 'po_expiry_date',
+            'expected_delivery_date', 'appointment_date', 'company',
+            'location', 'pincode', 'product_type_id', 'uom_id', 'weight_id',
+            'quantity', 'driver_name', 'vehicle_number', 'weight',
+            'mode_of_shipment', 'batch_number', 'asn', 'grn', 'status'
+        ]
+        values = [request.form.get(f) for f in fields]
+        placeholders = ', '.join(['%s'] * len(fields))
+        cursor.execute(
+            f"INSERT INTO shipment_status ({', '.join(fields)}) VALUES ({placeholders})",
+            values
+        )
         conn.commit()
         return redirect('/status')
     cursor.execute("SELECT * FROM companies")
     companies = cursor.fetchall()
+    cursor.execute("SELECT * FROM product_types")
+    product_types = cursor.fetchall()
+    cursor.execute("SELECT * FROM uom")
+    uoms = cursor.fetchall()
+    cursor.execute("SELECT * FROM weights")
+    weights = cursor.fetchall()
     conn.close()
-    return render_template('add_po.html', companies=companies)
+    return render_template('add_po.html', companies=companies, product_types=product_types, uoms=uoms, weights=weights)
+
+@app.route('/companies', methods=['GET', 'POST'])
+def manage_companies():
+    if not session['user'].get('is_admin'):
+        return "Access denied"
+    conn = get_db()
+    cursor = conn.cursor()
+    if request.method == 'POST':
+        name = request.form['name']
+        address = request.form['address']
+        gstn = request.form['gstn']
+        contact_person = request.form['contact_person']
+        email = request.form['email']
+        mobile = request.form['mobile']
+        cursor.execute(
+            "INSERT INTO companies (name, address, gstn, contact_person, email, mobile) "
+            "VALUES (%s, %s, %s, %s, %s, %s)",
+            (name, address, gstn, contact_person, email, mobile)
+        )
+        conn.commit()
+    cursor.execute("SELECT * FROM companies")
+    companies = cursor.fetchall()
+    conn.close()
+    return render_template('companies.html', companies=companies)
+
+@app.route('/product-types', methods=['GET', 'POST'])
+def product_types():
+    if not session['user'].get('is_admin'):
+        return "Access denied"
+    conn = get_db()
+    cursor = conn.cursor()
+    if request.method == 'POST':
+        cursor.execute("INSERT INTO product_types (name) VALUES (%s)", (request.form['name'],))
+        conn.commit()
+    cursor.execute("SELECT * FROM product_types")
+    items = cursor.fetchall()
+    conn.close()
+    return render_template('product_types.html', items=items)
+
+@app.route('/uom', methods=['GET', 'POST'])
+def uom():
+    if not session['user'].get('is_admin'):
+        return "Access denied"
+    conn = get_db()
+    cursor = conn.cursor()
+    if request.method == 'POST':
+        cursor.execute("INSERT INTO uom (name) VALUES (%s)", (request.form['name'],))
+        conn.commit()
+    cursor.execute("SELECT * FROM uom")
+    items = cursor.fetchall()
+    conn.close()
+    return render_template('uom.html', items=items)
+
+@app.route('/weights', methods=['GET', 'POST'])
+def weights():
+    if not session['user'].get('is_admin'):
+        return "Access denied"
+    conn = get_db()
+    cursor = conn.cursor()
+    if request.method == 'POST':
+        label = request.form['label']
+        value = request.form['value']
+        cursor.execute("INSERT INTO weights (label, value) VALUES (%s, %s)", (label, value))
+        conn.commit()
+    cursor.execute("SELECT * FROM weights")
+    items = cursor.fetchall()
+    conn.close()
+    return render_template('weights.html', items=items)
